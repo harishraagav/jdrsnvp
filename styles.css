@@ -1,0 +1,58 @@
+#home {
+    margin-left: auto;
+    color : #91442A;
+    border-radius: 30px;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+#home:hover {
+    background-color: #91442A;
+    color: #F8F4E9;
+    padding: 9px 20px;
+
+}
+
+#products {
+    margin-left: 20px;
+    color : #91442A;
+    border-radius: 30px;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+#products:hover {
+    background-color: #91442A;
+    color: #F8F4E9;
+    padding: 9px 20px;
+}
+
+#about {
+    margin-left: 20px;
+    color : #91442A;
+    border-radius: 30px;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+#about:hover {
+    background-color: #91442A;
+    color: #F8F4E9;
+    padding: 9px 20px;
+
+}
+
+#contact {
+    margin-left: 20px;
+    color : #91442A;
+    border-radius: 30px;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+#contact:hover {
+    background-color: #91442A;
+    color: #F8F4E9;
+    padding: 9px 20px;
+
+}
