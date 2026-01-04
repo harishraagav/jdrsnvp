@@ -1,3 +1,72 @@
+/* --- 1. DESKTOP STYLES (Default) --- */
+
+/* The container for your links */
+.nav-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+/* Style the links */
+.nav-links a {
+    text-decoration: none;
+    color: #333;       /* Dark text */
+    font-weight: bold;
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #91442A;    /* Your Brand Red/Brown on hover */
+}
+
+/* The Hamburger Button (Hidden on Desktop) */
+.menu-icon {
+    display: none;     /* Do not show this on laptops/PC */
+    font-size: 28px;
+    cursor: pointer;
+    color: #91442A;
+}
+
+/* --- 2. MOBILE STYLES (Triggers on screens smaller than 768px) --- */
+@media (max-width: 768px) {
+    
+    /* Show the Hamburger Button */
+    .menu-icon {
+        display: block; 
+    }
+
+    /* Hide the links initially */
+    .nav-links {
+        display: none;       /* Hidden until clicked */
+        flex-direction: column;
+        width: 100%;
+        position: absolute;  /* Floats below the header */
+        top: 100%;           /* Align exactly at bottom of header */
+        left: 0;
+        background-color: #F8F4E9; /* Your Brand Background */
+        border-bottom: 3px solid #91442A;
+        padding: 0;
+        text-align: center;
+        z-index: 1000;
+    }
+
+    /* This class is added by JS when you click */
+    .nav-links.active {
+        display: flex;       /* Reveal the links */
+    }
+
+    /* Make links bigger and easier to tap on mobile */
+    .nav-links a {
+        display: block;
+        padding: 15px;
+        border-top: 1px solid #ddd;
+        width: 100%;
+        box-sizing: border-box; /* Ensures padding doesn't break width */
+    }
+}
+
 #home {
     margin-left: auto;
     color : #91442A;
