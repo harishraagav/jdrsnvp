@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalog</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #91442A;
+            --accent: #ff9900;
+            --bg: #F8F4E9;
+        }
+
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg); }
+        
+        header { background-color: var(--primary); color: white; padding: 15px 20px; }
+        header h1 { margin: 0; font-size: 1.5rem; }
+
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        /* --- GRID IMAGE CROP --- */
+        .crop-container {
+            width: 100%;
+            max-width: 241px;
+            height: 150px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .crop-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .card h3 { 
+            font-size: 1rem; margin: 5px 0; color: #617C59; line-height: 1.3; text-align: left; width: 100%; 
+        }
+        .card .price { font-size: 1.2rem; font-weight: bold; margin-top: auto; width: 100%; text-align: left;}
+
+        /* --- MODAL STYLES --- */
+        .modal {
+            display: none; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white;
+            width: 90%; max-width: 900px; /* Made slightly wider */
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .close-btn {
+            position: absolute; top: 10px; right: 15px;
+            font-size: 28px; cursor: pointer; color: #333; z-index: 10;
+        }
+        
+        .modal-left { 
+            flex: 1.2; /* Give image slightly more space */
+            background: #fff; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px;
+        }
+
+        /* --- NEW: MODAL CROP CONTAINER --- */
+        /* This ensures the popup image has the EXACT same ratio as the grid */
+        .modal-crop-container {
+            width: 100%;
+            /* This math (241/150) forces the ratio to match your grid exactly */
+            aspect-ratio: 241 / 150; 
+            overflow: hidden;
+            border-radius: 4px;
+            background: #eee; /* Light gray background while loading */
+        }
+        
+        .modal-crop-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* This performs the crop */
+            object-position: center;
+        }
+
+        .modal-right { flex: 1.5; padding: 30px; background: #fdfdfd; overflow-y: auto; max-height: 80vh; }
+        .modal-title { font-size: 1.8rem; margin-bottom: 10px; margin-top: 0;}
+        .modal-ingredients { background: #f0f0f0; padding: 15px; margin: 15px 0; border-radius: 5px; font-size: 0.95rem; line-height: 1.5;}
+        .modal-desc { line-height: 1.6; color: #555; }
+
+        @media (max-width: 768px) {
+            .modal-content { flex-direction: column; height: 90vh; overflow-y: scroll; }
+            .modal-left { padding: 0; }
+            .modal-crop-container { border-radius: 0; } /* Full width on mobile looks better flat */
+        }
+    </style>
+</head>
+<body>
+
+    <header style="display: flex;">
+        <h1>Product Catalog</h1><a href="home.html" style="text-decoration: none; color: white; margin-left: auto; font-size: large; font-weight: bold; margin-top: auto;">Home</a>
+    </header>
+
+    <div class="container">
+        <div id="product-grid" class="product-grid">
+            <p>Loading products...</p>
+        </div>
+    </div>
+
+    <div id="product-modal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModalBtn()">&times;</span>
+            <div class="modal-left">
+                <div class="modal-crop-container">
+                    <img id="modal-img" src="" alt="Product Image">
+                </div>
+            </div>
+            <div class="modal-right">
+                <h2 id="modal-title" class="modal-title">Product Name</h2>
+                <div id="modal-price" class="price" style="color: #b12704; font-size: 1.5rem; margin-bottom: 10px;"></div>
+                
+                <div class="modal-ingredients">
+                    <strong>Ingredients:</strong><br>
+                    <span id="modal-ingredients">Loading...</span>
+                </div>
+                
+                <h3>About this item</h3>
+                <p id="modal-desc" class="modal-desc">Description goes here...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // *** PASTE YOUR GOOGLE SHEET CSV LINK HERE ***
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQxr_EVJXzu4H1MaT67uUPmEHOBH5kqhfWWid0_bUJWvNRdHS_ruG3-JHEsrJB7Z4sRxdDAfnDs1Clr/pub?gid=1346396879&single=true&output=csv';
+
+        Papa.parse(sheetUrl + '&t=' + Date.now(), {
+            download: true,
+            header: true,
+            complete: function(results) {
+                displayProducts(results.data);
+            }
+        });
+
+        function getImgUrl(url, size = 'w500') {
+            if (!url || url.trim() === '') return 'https://via.placeholder.com/300?text=No+Image';
+            let idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (!idMatch) idMatch = url.match(/id=([a-zA-Z0-9_-]+)/);
+            if (idMatch && idMatch[1]) {
+                return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=${size}`;
+            }
+            return url; 
+        }
+
+        function displayProducts(data) {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = ''; 
+
+            data.forEach(product => {
+                if(!product.name) return; 
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openModal(product);
+
+                const imgUrl = getImgUrl(product.image_url, 'w500');
+
+                card.innerHTML = `
+                    <div class="crop-container">
+                        <img src="${imgUrl}" alt="${product.name}">
+                    </div>
+                    <h3>${product.name}</h3>
+                    <div class="price">${product.price ? product.price : ''}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        const modal = document.getElementById('product-modal');
+        const modalImg = document.getElementById('modal-img');
+        const modalTitle = document.getElementById('modal-title');
+        const modalIng = document.getElementById('modal-ingredients');
+        const modalDesc = document.getElementById('modal-desc');
+        const modalPrice = document.getElementById('modal-price');
+
+        function openModal(product) {
+            // Load High Res (w1000)
+            modalImg.src = getImgUrl(product.image_url, 'w1000');
+            
+            modalTitle.textContent = product.name;
+            modalIng.textContent = product.ingredients || "N/A";
+            modalDesc.textContent = product.description || "No description available.";
+            modalPrice.textContent = product.price || "";
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModalBtn() {
+            modal.style.display = 'none';
+        }
+
+        function closeModal(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
